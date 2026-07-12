@@ -1,18 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotificationsController } from './notifications.controller';
+import { NotificationsService } from './notifications.service';
+import { NotificationsGateway } from './notifications.gateway';
 
-describe('NotificationsController', () => {
-  let controller: NotificationsController;
+describe('NotificationsService', () => {
+  let service: NotificationsService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [NotificationsController],
+      providers: [
+        NotificationsService,
+        { provide: NotificationsGateway, useValue: { server: { emit: jest.fn() } } },
+      ],
     }).compile();
 
-    controller = module.get<NotificationsController>(NotificationsController);
+    service = module.get<NotificationsService>(NotificationsService);
   });
 
   it('should be defined', () => {
-    expect(controller).toBeDefined();
+    expect(service).toBeDefined();
   });
 });
