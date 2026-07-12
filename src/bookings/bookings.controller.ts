@@ -27,7 +27,7 @@ import { UpdateBookingDto } from './dto/update-booking.dto';
 @Controller('bookings')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-export class BookingsController {
+export class BookingsController {  // ✅ 'export' is here
   constructor(private readonly bookingsService: BookingsService) {}
 
   @Post()
@@ -103,3 +103,4 @@ export class BookingsController {
     return this.bookingsService.remove(id);
   }
 }
+

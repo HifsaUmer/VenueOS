@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SpacesService } from '../spaces/spaces.service';
 import { EquipmentService } from '../equipment/equipment.service';
 import { VendorsService } from '../vendors/vendors.service';
+import { ConflictDetectionService } from './conflict-detection.service';
 import { CreateBookingDto, BookingStatus } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 
@@ -18,6 +19,7 @@ export class BookingsService {
     private spacesService: SpacesService,
     private equipmentService: EquipmentService,
     private vendorsService: VendorsService,
+    private conflictDetection: ConflictDetectionService,
   ) {}
 
   async create(createBookingDto: CreateBookingDto) {
@@ -72,9 +74,18 @@ export class BookingsService {
       }
     }
 
-    // 4. Create booking with transaction
+    // 4. Advanced conflict detection
+    await this.conflictDetection.validateBooking({
+      spaceId,
+      date,
+      startTime,
+      endTime,
+      equipmentIds,
+      vendorIds,
+    });
+
+    // 5. Create booking with transaction
     return this.prisma.$transaction(async (prisma) => {
-      // Create the booking
       const booking = await prisma.booking.create({
         data: {
           eventId,
@@ -89,7 +100,6 @@ export class BookingsService {
         },
       });
 
-      // Create booking equipment relations
       if (equipmentIds && equipmentIds.length > 0) {
         for (let i = 0; i < equipmentIds.length; i++) {
           await prisma.bookingEquipment.create({
@@ -102,7 +112,6 @@ export class BookingsService {
         }
       }
 
-      // Create booking vendor relations
       if (vendorIds && vendorIds.length > 0) {
         for (const vendorId of vendorIds) {
           await prisma.bookingVendor.create({
@@ -159,7 +168,6 @@ export class BookingsService {
   async update(id: string, updateBookingDto: UpdateBookingDto) {
     await this.findOne(id);
 
-    // If date/time/space changed, check conflicts
     if (
       updateBookingDto.spaceId ||
       updateBookingDto.date ||
@@ -172,7 +180,6 @@ export class BookingsService {
       const startTime = updateBookingDto.startTime || current.startTime;
       const endTime = updateBookingDto.endTime || current.endTime;
 
-      // Fix: Convert date to string if it's a Date object
       const dateStr = typeof date === 'string' ? date : date.toISOString().split('T')[0];
 
       const conflict = await this.spacesService.checkAvailability(
@@ -195,12 +202,10 @@ export class BookingsService {
       }
     }
 
-    // Update booking
     const { equipmentIds, equipmentQuantities, vendorIds, ...updateData } =
       updateBookingDto;
 
     return this.prisma.$transaction(async (prisma) => {
-      // Update main booking
       const booking = await prisma.booking.update({
         where: { id },
         data: {
@@ -209,7 +214,6 @@ export class BookingsService {
         },
       });
 
-      // Update equipment if provided
       if (equipmentIds) {
         await prisma.bookingEquipment.deleteMany({
           where: { bookingId: id },
@@ -226,7 +230,6 @@ export class BookingsService {
         }
       }
 
-      // Update vendors if provided
       if (vendorIds) {
         await prisma.bookingVendor.deleteMany({
           where: { bookingId: id },
@@ -250,7 +253,6 @@ export class BookingsService {
     await this.findOne(id);
 
     return this.prisma.$transaction(async (prisma) => {
-      // Delete relations first
       await prisma.bookingEquipment.deleteMany({
         where: { bookingId: id },
       });
@@ -258,7 +260,6 @@ export class BookingsService {
         where: { bookingId: id },
       });
 
-      // Delete booking
       return prisma.booking.delete({
         where: { id },
       });
@@ -319,7 +320,6 @@ export class BookingsService {
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     });
 
-    // Group by space
     const spaces = await this.prisma.space.findMany();
     const calendarData = spaces.map((space) => {
       const spaceBookings = bookings.filter((b) => b.spaceId === space.id);

@@ -29,4 +29,27 @@ export class AiController {
     console.log(`User ${req.user.email} (${req.user.role}) is using AI feature: ${aiRequest.feature}`);
     return this.aiService.processRequest(aiRequest);
   }
+  // Add this method to AiController
+@Post('setup-instructions')
+@Roles(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.OPERATIONS)
+@ApiOperation({ summary: 'Generate setup instructions for an event' })
+@ApiResponse({ status: 200, description: 'Setup instructions generated' })
+async generateSetupInstructions(
+  @Body() body: {
+    eventName: string;
+    eventType: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    guestCount: number;
+    space: string;
+    equipment: string[];
+    vendors: string[];
+    specialRequirements: string;
+  },
+  @Request() req,
+) {
+  console.log(`User ${req.user.email} is generating setup instructions`);
+  return this.aiService.generateSetupInstructions(body.eventName, body);
+}
 }
