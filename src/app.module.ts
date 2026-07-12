@@ -4,6 +4,10 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AiModule } from './ai/ai.module';
+import { SpacesModule } from './spaces/spaces.module';
+import { EquipmentModule } from './equipment/equipment.module';
+import { VendorsModule } from './vendors/vendors.module';
+import { BookingsModule } from './bookings/bookings.module';
 
 @Module({
   imports: [
@@ -13,7 +17,11 @@ import { AiModule } from './ai/ai.module';
     PrismaModule,
     AuthModule,
     UsersModule,
-    AiModule,  // Add this line
+    AiModule,
+    SpacesModule,      // Add this
+    EquipmentModule,   // Add this
+    VendorsModule,     // Add this
+    BookingsModule,    // Add this
   ],
 })
 export class AppModule {}

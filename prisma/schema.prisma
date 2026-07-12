@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,7 +16,7 @@ enum UserRole {
 }
 
 model User {
-  id        String   @id @default(cuid())  // Changed from Int to String
+  id        String   @id @default(cuid())
   fullName  String
   email     String   @unique
   password  String
@@ -27,8 +26,106 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations (add these later)
-  // events    Event[]
-  // bookings  Booking[]
-  // etc.
+  events   Event[]   @relation("UserEvents")
+  bookings Booking[] @relation("UserBookings")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   // Wedding, Corporate, Birthday, Conference, etc.
+  status      String   @default("DRAFT") // DRAFT, PROPOSAL, CONFIRMED, COMPLETED, CANCELLED
+  clientId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client   User     @relation("UserEvents", fields: [clientId], references: [id])
+  bookings Booking[]
+}
+
+model Space {
+  id              String    @id @default(cuid())
+  name            String
+  type            String
+  capacity        Int
+  hourlyRate      Float
+  description     String?
+  amenities       String?   // JSON string
+  isAvailable     Boolean   @default(true)
+  requiresDeposit Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  bookings Booking[]
+}
+
+model Equipment {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  description String?
+  quantity    Int      @default(1)
+  rentalPrice Float
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookingEquipment BookingEquipment[]
+}
+
+model Vendor {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  email       String
+  phone       String
+  address     String?
+  description String?
+  rating      Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookingVendors BookingVendor[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  eventId     String
+  spaceId     String
+  userId      String   @default("")  // Add this field
+  date        DateTime
+  startTime   String
+  endTime     String
+  guestCount  Int
+  status      String   @default("PENDING") // PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event   Event   @relation(fields: [eventId], references: [id])
+  space   Space   @relation(fields: [spaceId], references: [id])
+  user    User    @relation("UserBookings", fields: [userId], references: [id])
+
+  bookingEquipment BookingEquipment[]
+  bookingVendors   BookingVendor[]
+}
+
+model BookingEquipment {
+  id          String   @id @default(cuid())
+  bookingId   String
+  equipmentId String
+  quantity    Int      @default(1)
+
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+}
+
+model BookingVendor {
+  id        String @id @default(cuid())
+  bookingId String
+  vendorId  String
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  vendor  Vendor  @relation(fields: [vendorId], references: [id])
 }
