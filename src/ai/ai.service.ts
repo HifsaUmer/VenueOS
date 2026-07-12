@@ -6,6 +6,7 @@ import { AiRequestDto, AiFeature } from './dto/ai-request.dto';
 import { EVENT_BRIEF_PROMPT } from './prompts/event-brief.prompt';
 import { CONTRACT_CLAUSE_PROMPT } from './prompts/contract-clause.prompt';
 import { DEBRIEF_SUMMARY_PROMPT } from './prompts/debrief-summary.prompt';
+import { SETUP_INSTRUCTION_PROMPT } from './prompts/setup-instruction.prompt';
 
 @Injectable()
 export class AiService {
@@ -222,4 +223,78 @@ Signed: __________________  Date: ________
       fallbackUsed: true,
     };
   }
+  async generateSetupInstructions(input: string, context: any) {
+  const prompt = SETUP_INSTRUCTION_PROMPT
+    .replace(/{eventName}/g, context.eventName || 'Event')
+    .replace(/{eventType}/g, context.eventType || 'General')
+    .replace(/{date}/g, context.date || 'TBD')
+    .replace(/{startTime}/g, context.startTime || 'TBD')
+    .replace(/{endTime}/g, context.endTime || 'TBD')
+    .replace(/{guestCount}/g, String(context.guestCount || '0'))
+    .replace(/{space}/g, context.space || 'Not specified')
+    .replace(/{equipmentList}/g, context.equipment?.join(', ') || 'None')
+    .replace(/{vendorList}/g, context.vendors?.join(', ') || 'None')
+    .replace(/{specialRequirements}/g, context.specialRequirements || 'None');
+
+  if (this.useMock) {
+    return {
+      success: true,
+      fallbackUsed: true,
+      data: {
+        preEvent: [
+          { task: 'Setup room with tables and chairs', time: '4 hours before', assignedTo: 'Operations', priority: 'High' },
+          { task: 'Test all AV equipment', time: '3 hours before', assignedTo: 'AV Team', priority: 'High' },
+          { task: 'Coordinate with all vendors', time: '3 hours before', assignedTo: 'Coordinator', priority: 'Medium' },
+          { task: 'Prepare signage and wayfinding', time: '2 hours before', assignedTo: 'Operations', priority: 'Medium' },
+          { task: 'Set up registration desk', time: '2 hours before', assignedTo: 'Operations', priority: 'High' },
+        ],
+        onSiteSetup: [
+          { task: 'Space configuration check', time: '2 hours before', assignedTo: 'Operations', priority: 'High' },
+          { task: 'Equipment placement verification', time: '2 hours before', assignedTo: 'AV Team', priority: 'High' },
+          { task: 'Vendor arrival and setup', time: '90 min before', assignedTo: 'Coordinator', priority: 'Medium' },
+          { task: 'Safety and fire marshal check', time: '1 hour before', assignedTo: 'Operations', priority: 'High' },
+        ],
+        eventTimeline: [
+          { time: '-60 min', task: 'Staff briefing and assignments', assignedTo: 'Manager' },
+          { time: '-30 min', task: 'Final equipment test', assignedTo: 'AV Team' },
+          { time: '-15 min', task: 'Doors open for guests', assignedTo: 'Operations' },
+          { time: '0 min', task: 'Event starts', assignedTo: 'All' },
+        ],
+        duringEvent: [
+          { task: 'Monitor AV equipment', assignedTo: 'AV Team' },
+          { task: 'Manage vendor stations', assignedTo: 'Coordinator' },
+          { task: 'Guest flow management', assignedTo: 'Operations' },
+          { task: 'Emergency preparedness', assignedTo: 'Manager' },
+        ],
+        postEvent: [
+          { task: 'Teardown equipment', time: 'Immediately after', assignedTo: 'Operations' },
+          { task: 'Return rented equipment', time: 'Within 1 hour', assignedTo: 'AV Team' },
+          { task: 'Vendor checkout', time: 'Within 1 hour', assignedTo: 'Coordinator' },
+          { task: 'Venue cleanup', time: 'Within 2 hours', assignedTo: 'Operations' },
+          { task: 'Final walkthrough', time: 'Within 2 hours', assignedTo: 'Manager' },
+        ],
+      },
+      message: 'Setup instructions generated (fallback mode)',
+    };
+  }
+
+  const response = await this.callOpenAI(prompt, 'You are an expert event operations manager. Always return valid JSON.', 0.3);
+  
+  try {
+    const parsedData = JSON.parse(response);
+    return {
+      success: true,
+      data: parsedData,
+    };
+  } catch (parseError) {
+    return {
+      success: true,
+      data: {
+        raw: response,
+        parseError: 'Failed to parse as JSON',
+      },
+      message: 'AI returned non-JSON response',
+    };
+  }
+}
 }

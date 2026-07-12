@@ -8,6 +8,8 @@ import { SpacesModule } from './spaces/spaces.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { VendorsModule } from './vendors/vendors.module';
 import { BookingsModule } from './bookings/bookings.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { CalendarModule } from './calendar/calendar.module';
 
 @Module({
   imports: [
@@ -18,10 +20,12 @@ import { BookingsModule } from './bookings/bookings.module';
     AuthModule,
     UsersModule,
     AiModule,
-    SpacesModule,      // Add this
-    EquipmentModule,   // Add this
-    VendorsModule,     // Add this
-    BookingsModule,    // Add this
+    SpacesModule,
+    EquipmentModule,
+    VendorsModule,
+    BookingsModule,
+    NotificationsModule,  // Add this
+    CalendarModule,       // Add this
   ],
 })
 export class AppModule {}
