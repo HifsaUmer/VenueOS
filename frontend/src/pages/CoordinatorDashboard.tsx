@@ -1,12 +1,25 @@
 import { useEffect, useState } from 'react';
 import PageLayout from '../components/PageLayout';
 import StatsCard from '../components/StatsCard';
-import { Calendar, MapPin, Users, Clock, Sparkles, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Sparkles, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
 import api from '../services/api';
 
+interface Booking {
+  id: string;
+  status: string;
+  date: string;
+  event?: { title: string };
+}
+
+interface Space {
+  id: string;
+  name: string;
+  capacity: number;
+}
+
 export default function CoordinatorDashboard() {
-  const [bookings, setBookings] = useState([]);
-  const [spaces, setSpaces] = useState([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [spaces, setSpaces] = useState<Space[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

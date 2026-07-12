@@ -28,6 +28,7 @@ model User {
 
   events   Event[]   @relation("UserEvents")
   bookings Booking[] @relation("UserBookings")
+  invoices Invoice[]
 }
 
 model Event {

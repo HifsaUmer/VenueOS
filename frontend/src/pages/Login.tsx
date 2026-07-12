@@ -29,7 +29,7 @@ export default function Login() {
         FINANCE: '/finance',
         OPERATIONS: '/operations',
       };
-      navigate(routes[user.role?.toUpperCase()] || '/client');
+      navigate(routes[user.role?.toUpperCase() as keyof typeof routes] || '/client');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid email or password');
     } finally {

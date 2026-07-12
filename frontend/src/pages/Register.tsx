@@ -32,7 +32,7 @@ export default function Register() {
         FINANCE: '/finance',
         OPERATIONS: '/operations',
       };
-      navigate(routes[user.role?.toUpperCase()] || '/client');
+      navigate(routes[user.role?.toUpperCase() as keyof typeof routes] || '/client');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {

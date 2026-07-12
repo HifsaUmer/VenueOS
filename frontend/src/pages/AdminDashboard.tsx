@@ -8,6 +8,10 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 
+interface Booking {
+  total?: number;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -33,7 +37,7 @@ export default function AdminDashboard() {
           totalEvents: events.data.length || 0,
           totalSpaces: spaces.data.length || 0,
           totalBookings: bookings.data.length || 0,
-          revenue: bookings.data.reduce((sum, b) => sum + (b.total || 0), 0),
+          revenue: (bookings.data as Booking[]).reduce((sum: number, b: Booking) => sum + (b.total || 0), 0),
           occupancyRate: spaces.data.length > 0 ? Math.round((bookings.data.length / (spaces.data.length * 30)) * 100) : 0,
         });
       } catch (error) {
