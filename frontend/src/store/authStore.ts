@@ -1,32 +1,30 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-
-type UserRole = 'CLIENT' | 'COORDINATOR' | 'OPERATIONS' | 'FINANCE' | 'ADMIN'
+import { create } from 'zustand';
 
 interface User {
-  id: string
-  email: string
-  name: string
-  role: UserRole
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
 }
 
 interface AuthState {
-  user: User | null
-  token: string | null
-  setAuth: (user: User, token: string) => void
-  logout: () => void
+  user: User | null;
+  token: string | null;
+  setAuth: (user: User, token: string) => void;
+  logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
-      setAuth: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
-    }),
-    {
-      name: 'venueos-auth-storage',
-    }
-  )
-)
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  token: localStorage.getItem('token'),
+
+  setAuth: (user, token) => {
+    localStorage.setItem('token', token);
+    set({ user, token });
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    set({ user: null, token: null });
+  },
+}));
