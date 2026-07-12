@@ -3,6 +3,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -14,6 +15,7 @@ describe('AuthController', () => {
         AuthService,
         { provide: JwtService, useValue: { sign: jest.fn() } },
         { provide: ConfigService, useValue: { get: jest.fn() } },
+        { provide: PrismaService, useValue: { user: { findUnique: jest.fn(), create: jest.fn() } } }, // ✅ ADD THIS
       ],
     }).compile();
 
