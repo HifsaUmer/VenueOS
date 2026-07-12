@@ -10,6 +10,15 @@ import { VendorsModule } from './vendors/vendors.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { InvoicesModule } from './invoices/invoices.module';
+import { PaymentsModule } from './payments/payments.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { EventsModule } from './events/events.module';
+import { TimelineModule } from './timeline/timeline.module';
+import { ClientsModule } from './clients/clients.module';
+import { EnquiriesModule } from './enquiries/enquiries.module';
+import { ProposalsModule } from './proposals/proposals.module';
+import { ContractsModule } from './contracts/contracts.module';
 
 @Module({
   imports: [
@@ -24,8 +33,17 @@ import { CalendarModule } from './calendar/calendar.module';
     EquipmentModule,
     VendorsModule,
     BookingsModule,
-    NotificationsModule,  // Add this
-    CalendarModule,       // Add this
+    NotificationsModule,
+    CalendarModule,
+    InvoicesModule,
+    PaymentsModule,
+    AnalyticsModule,
+    EventsModule,
+    TimelineModule,
+    ClientsModule,
+    EnquiriesModule,
+    ProposalsModule,
+    ContractsModule,
   ],
 })
 export class AppModule {}

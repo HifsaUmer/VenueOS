@@ -31,6 +31,15 @@ async function bootstrap() {
     .addTag('calendar', 'Calendar and scheduling')
     .addTag('ai', 'AI-powered features')
     .addTag('notifications', 'WebSocket notifications')
+    .addTag('enquiries', 'Enquiry management')
+    .addTag('proposals', 'Proposal management')
+    .addTag('contracts', 'Contract management')
+    .addTag('events', 'Event management')
+    .addTag('timeline', 'Timeline management')
+    .addTag('invoices', 'Invoice management')
+    .addTag('payments', 'Payment management')
+    .addTag('analytics', 'Analytics endpoints')
+    .addTag('clients', 'Client management')
     .build();
     
   const document = SwaggerModule.createDocument(app, config);
