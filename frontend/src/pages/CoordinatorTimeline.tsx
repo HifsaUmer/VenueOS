@@ -3,8 +3,18 @@ import PageLayout from '../components/PageLayout';
 import { Clock, CheckCircle, ChevronRight, Sparkles, Plus, Calendar } from 'lucide-react';
 import api from '../services/api';
 
+interface TimelineItem {
+  id: string;
+  title: string;
+  description?: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  assignedTo?: string;
+}
+
 export default function CoordinatorTimeline() {
-  const [timeline, setTimeline] = useState([]);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
