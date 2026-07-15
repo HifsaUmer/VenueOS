@@ -1,20 +1,10 @@
 import { useEffect, useState } from 'react';
 import PageLayout from '../components/PageLayout';
-import { Clock, CheckCircle, ChevronRight, Sparkles, Plus, Calendar } from 'lucide-react';
+import { Clock, CheckCircle, Sparkles, Plus, Calendar } from 'lucide-react';
 import api from '../services/api';
 
-interface TimelineItem {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: string;
-  endTime: string;
-  status: string;
-  assignedTo?: string;
-}
-
 export default function CoordinatorTimeline() {
-  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,10 +35,10 @@ export default function CoordinatorTimeline() {
   return (
     <PageLayout
       title="Event Timeline"
-      subtitle="Plan and manage event schedules"
+      subtitle="Plan and manage event schedules and operational tasks"
       icon={Sparkles}
       actions={
-        <button className="group relative px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 hover:-translate-y-0.5">
+        <button className="group relative px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
           <span className="relative z-10 flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Add Task
@@ -62,7 +52,7 @@ export default function CoordinatorTimeline() {
           <div className="bg-white/80 backdrop-blur-sm border border-white/40 rounded-2xl p-12 text-center">
             <Calendar className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900">No Timeline Tasks</h3>
-            <p className="text-slate-500 text-sm mt-1">Create a timeline for your event</p>
+            <p className="text-slate-500 text-sm mt-1 font-normal">Add schedule checkpoints or workflow steps to configure this timeline</p>
           </div>
         ) : (
           timeline.map((item, index) => (

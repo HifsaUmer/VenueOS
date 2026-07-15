@@ -1,27 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClientsService } from './clients.service';
-import { PrismaService } from '../prisma/prisma.service';
 
 describe('ClientsService', () => {
   let service: ClientsService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ClientsService,
-        {
-          provide: PrismaService,
-          useValue: {
-            client: {
-              findMany: jest.fn().mockResolvedValue([]),
-              findUnique: jest.fn().mockResolvedValue(null),
-              create: jest.fn().mockResolvedValue({}),
-              update: jest.fn().mockResolvedValue({}),
-              delete: jest.fn().mockResolvedValue({}),
-            },
-          },
-        },
-      ],
+      providers: [ClientsService],
     }).compile();
 
     service = module.get<ClientsService>(ClientsService);

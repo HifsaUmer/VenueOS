@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Imported the navigation hook
 import PageLayout from '../components/PageLayout';
 import StatsCard from '../components/StatsCard';
-import { 
-  Users, Calendar, MapPin, Activity, 
-  TrendingUp, Award, Sparkles, 
-  ChevronRight, Zap, Star 
+import {
+  Users, Calendar, MapPin, Activity,
+  TrendingUp, Award, Sparkles,
+  ChevronRight, Zap, Star
 } from 'lucide-react';
 import api from '../services/api';
 
-interface Booking {
-  total?: number;
-}
-
 export default function AdminDashboard() {
+  const navigate = useNavigate(); // 2. Initialized the navigator
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalEvents: 0,
@@ -26,19 +24,25 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [users, events, spaces, bookings] = await Promise.all([
-          api.get('/users'),
-          api.get('/events'),
-          api.get('/spaces'),
-          api.get('/bookings'),
+        const [eventsRes, spacesRes, bookingsRes] = await Promise.all([
+          api.get('/events').catch(() => ({ data: [] })),
+          api.get('/spaces').catch(() => ({ data: [] })),
+          api.get('/bookings').catch(() => ({ data: [] })),
         ]);
+
+        const events = eventsRes.data || [];
+        const spaces = spacesRes.data || [];
+        const bookings = bookingsRes.data || [];
+
         setStats({
-          totalUsers: users.data.length || 0,
-          totalEvents: events.data.length || 0,
-          totalSpaces: spaces.data.length || 0,
-          totalBookings: bookings.data.length || 0,
-          revenue: (bookings.data as Booking[]).reduce((sum: number, b: Booking) => sum + (b.total || 0), 0),
-          occupancyRate: spaces.data.length > 0 ? Math.round((bookings.data.length / (spaces.data.length * 30)) * 100) : 0,
+          totalUsers: 0, // TODO: Add proper /users/me or count endpoint later
+          totalEvents: events.length,
+          totalSpaces: spaces.length,
+          totalBookings: bookings.length,
+          revenue: bookings.reduce((sum: number, b: any) => sum + (b.total || b.amount || 0), 0),
+          occupancyRate: spaces.length > 0 
+            ? Math.round((bookings.length / (spaces.length * 30)) * 100) 
+            : 0,
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -46,6 +50,7 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     };
+
     fetchStats();
   }, []);
 
@@ -61,15 +66,22 @@ export default function AdminDashboard() {
   }
 
   const cards = [
-    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'blue' as const, delay: 0 },
     { label: 'Total Events', value: stats.totalEvents, icon: Calendar, color: 'purple' as const, delay: 100 },
     { label: 'Total Spaces', value: stats.totalSpaces, icon: MapPin, color: 'green' as const, delay: 200 },
     { label: 'Total Bookings', value: stats.totalBookings, icon: Activity, color: 'orange' as const, delay: 300 },
+    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'blue' as const, delay: 0 },
+  ];
+
+  // 3. Defined the target routes mapping to match App.tsx definitions
+  const quickActions = [
+    { title: 'Manage Users', icon: Users, color: 'blue', count: stats.totalUsers, path: '/admin/users' },
+    { title: 'View Analytics', icon: TrendingUp, color: 'purple', count: '📊', path: '/admin/analytics' },
+    { title: 'System Settings', icon: Star, color: 'teal', count: '⚙️', path: '/admin/settings' },
   ];
 
   return (
-    <PageLayout 
-      title="Admin Dashboard" 
+    <PageLayout
+      title="Admin Dashboard"
       subtitle="Welcome back! Here's your venue performance overview"
       icon={Sparkles}
       actions={
@@ -90,7 +102,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Bottom Grid */}
+      {/* Bottom Grid - Revenue & Occupancy */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Card */}
         <div className="group bg-white/80 backdrop-blur-sm border border-white/40 rounded-2xl p-6 hover:shadow-xl transition-all duration-500 animate-fade-in-up">
@@ -110,7 +122,6 @@ export default function AdminDashboard() {
               <span className="text-xs text-slate-400">vs last month</span>
             </div>
           </div>
-          {/* Mini sparkle line */}
           <div className="mt-4 h-1 w-full bg-gradient-to-r from-green-200 via-green-400 to-green-600 rounded-full opacity-50"></div>
         </div>
 
@@ -130,9 +141,9 @@ export default function AdminDashboard() {
             <div className="relative w-20 h-20">
               <svg className="w-20 h-20 -rotate-90">
                 <circle cx="40" cy="40" r="32" fill="none" stroke="#e2e8f0" strokeWidth="6" />
-                <circle 
-                  cx="40" cy="40" r="32" fill="none" 
-                  stroke="url(#grad)" strokeWidth="6" 
+                <circle
+                  cx="40" cy="40" r="32" fill="none"
+                  stroke="url(#grad)" strokeWidth="6"
                   strokeDasharray={`${stats.occupancyRate * 2.01} 201`}
                   strokeLinecap="round"
                 />
@@ -153,13 +164,10 @@ export default function AdminDashboard() {
 
       {/* Quick Action Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
-        {[
-          { title: 'Manage Users', icon: Users, color: 'blue', count: stats.totalUsers },
-          { title: 'View Analytics', icon: TrendingUp, color: 'purple', count: '📊' },
-          { title: 'System Settings', icon: Star, color: 'teal', count: '⚙️' },
-        ].map((item, index) => (
-          <div 
+        {quickActions.map((item, index) => (
+          <div
             key={item.title}
+            onClick={() => navigate(item.path)} // 4. Added the click handler to trigger actual routing transition
             className="group bg-white/60 backdrop-blur-sm border border-white/40 rounded-2xl p-6 hover:shadow-xl transition-all duration-500 hover:-translate-y-1 cursor-pointer animate-fade-in-up"
             style={{ animationDelay: `${400 + index * 100}ms` }}
           >

@@ -1,20 +1,11 @@
 import { useEffect, useState } from 'react';
 import PageLayout from '../components/PageLayout';
 import StatsCard from '../components/StatsCard';
-import { DollarSign, FileText, CreditCard, TrendingUp, Sparkles, ArrowUpRight, Clock, ChevronRight } from 'lucide-react';
+import { DollarSign, FileText, CreditCard, TrendingUp, Sparkles, ArrowUpRight, Clock } from 'lucide-react';
 import api from '../services/api';
 
-interface Invoice {
-  id: string;
-  invoiceNumber: string;
-  amount: number;
-  status: string;
-  client?: { fullName: string };
-  event?: { title: string };
-}
-
 export default function FinanceDashboard() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +22,7 @@ export default function FinanceDashboard() {
     fetchInvoices();
   }, []);
 
-  const totalRevenue = invoices.reduce((sum: number, inv: Invoice) => sum + (inv.amount || 0), 0);
+  const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
   const paidInvoices = invoices.filter(inv => inv.status === 'PAID').length;
   const pendingInvoices = invoices.filter(inv => inv.status === 'PENDING').length;
 
@@ -75,11 +66,11 @@ export default function FinanceDashboard() {
               {invoices.slice(0, 5).map((invoice) => (
                 <div key={invoice.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                   <div>
-                    <p className="font-medium text-slate-900 text-sm">#{invoice.invoiceNumber}</p>
+                    <p className="font-medium text-slate-900 text-sm">#{invoice.id.slice(0, 8)}</p>
                     <p className="text-xs text-slate-500">{invoice.client?.fullName || 'N/A'}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-slate-900">${invoice.amount?.toLocaleString() || '0'}</span>
+                    <span className="text-sm font-semibold text-slate-900">${invoice.total?.toLocaleString() || '0'}</span>
                     <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                       invoice.status === 'PAID' ? 'bg-green-100 text-green-700' :
                       invoice.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :

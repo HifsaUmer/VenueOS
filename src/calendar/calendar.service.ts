@@ -111,9 +111,13 @@ export class CalendarService {
         const b1 = bookings[i];
         const b2 = bookings[j];
 
+        // Format Date objects to clean YYYY-MM-DD strings to avoid comparison bugs
+        const b1DateStr = b1.date.toISOString().split('T')[0];
+        const b2DateStr = b2.date.toISOString().split('T')[0];
+
         if (
           b1.spaceId === b2.spaceId &&
-          b1.date.getTime() === b2.date.getTime() &&
+          b1DateStr === b2DateStr &&
           this.hasTimeOverlap(b1.startTime, b1.endTime, b2.startTime, b2.endTime)
         ) {
           conflicts.spaceConflicts.push({
@@ -141,8 +145,11 @@ export class CalendarService {
         const b1 = bookings[i];
         const b2 = bookings[j];
 
+        const b1DateStr = b1.date.toISOString().split('T')[0];
+        const b2DateStr = b2.date.toISOString().split('T')[0];
+
         if (
-          b1.date.getTime() === b2.date.getTime() &&
+          b1DateStr === b2DateStr &&
           this.hasTimeOverlap(b1.startTime, b1.endTime, b2.startTime, b2.endTime)
         ) {
           const equip1 = b1.bookingEquipment.map((be) => be.equipmentId);

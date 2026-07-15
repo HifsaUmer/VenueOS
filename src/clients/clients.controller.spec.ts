@@ -11,18 +11,7 @@ describe('ClientsController', () => {
       controllers: [ClientsController],
       providers: [
         ClientsService,
-        {
-          provide: PrismaService,
-          useValue: {
-            client: {
-              findMany: jest.fn().mockResolvedValue([]),
-              findUnique: jest.fn().mockResolvedValue(null),
-              create: jest.fn().mockResolvedValue({}),
-              update: jest.fn().mockResolvedValue({}),
-              delete: jest.fn().mockResolvedValue({}),
-            },
-          },
-        },
+        { provide: PrismaService, useValue: { client: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() } } },
       ],
     }).compile();
 

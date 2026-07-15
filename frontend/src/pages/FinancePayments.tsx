@@ -1,57 +1,13 @@
-import { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar';
-import api from '../services/api';
+import Navbar from '../components/Navbar'
 
-interface Payment {
-  id: string;
-  invoiceId: string;
-  amount: number;
-  method: string;
-  status: string;
-  transactionId: string | null;
-  paidAt: string | null;
-  createdAt: string;
-  invoice?: { invoiceNumber: string; client?: { fullName: string } };
-}
+const mockPayments = [
+  { id: 'PAY-001', invoice: 'INV-2025-015', client: 'Acme Corp', amount: 8500, method: 'Credit Card', date: '2025-07-10', status: 'Completed' },
+  { id: 'PAY-002', invoice: 'INV-2025-012', client: 'Local Community', amount: 5000, method: 'Bank Transfer', date: '2025-06-20', status: 'Completed' },
+  { id: 'PAY-003', invoice: 'INV-2025-011', client: 'Green Events', amount: 7000, method: 'Check', date: '2025-06-15', status: 'Pending' },
+]
 
 export default function FinancePayments() {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        const res = await api.get('/payments');
-        setPayments(res.data);
-      } catch (err) {
-        console.error('Failed to fetch payments:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPayments();
-  }, []);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'FAILED':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
+  const payments = mockPayments
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -77,16 +33,18 @@ export default function FinancePayments() {
             <tbody className="divide-y">
               {payments.map((payment) => (
                 <tr key={payment.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{payment.id.slice(0, 8)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{payment.invoice?.invoiceNumber || 'N/A'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{payment.invoice?.client?.fullName || 'N/A'}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{payment.id}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{payment.invoice}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{payment.client}</td>
                   <td className="px-6 py-4 text-sm text-gray-700">${payment.amount.toLocaleString()}</td>
                   <td className="px-6 py-4 text-sm text-gray-700">{payment.method}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    {new Date(payment.paidAt || payment.createdAt).toLocaleDateString()}
-                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">{payment.date}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(payment.status)}`}>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full
+                      ${payment.status === 'Completed' ? 'bg-green-100 text-green-800' : 
+                        'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
                       {payment.status}
                     </span>
                   </td>
@@ -97,5 +55,5 @@ export default function FinancePayments() {
         </div>
       </main>
     </div>
-  );
+  )
 }

@@ -10,35 +10,8 @@ const mockInvoices = [
 export default function FinanceInvoices() {
   const invoices = mockInvoices
 
-<<<<<<< Updated upstream
   const handleGeneratePDF = (invoiceId: string) => {
     alert(`Generating PDF for ${invoiceId}`)
-=======
-  const handleGeneratePDF = async (invoiceId: string) => {
-    try {
-      const response = await api.get(`/invoices/${invoiceId}/pdf`, {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `invoice-${invoiceId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error('Failed to download PDF:', err);
-      alert('Failed to download PDF');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
->>>>>>> Stashed changes
   }
 
   return (
