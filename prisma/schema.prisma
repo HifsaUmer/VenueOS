@@ -112,6 +112,40 @@ model Booking {
   bookingVendors   BookingVendor[]
 }
 
+model Invoice {
+  id          String   @id @default(cuid())
+  invoiceNumber String @unique
+  eventId     String
+  clientId    String
+  subtotal    Float
+  taxRate     Float?
+  taxType     String   @default("VAT")
+  discount    Float?
+  total       Float
+  currency    String   @default("USD")
+  status      String   @default("PENDING") // PENDING, PAID, OVERDUE
+  dueDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client User @relation(fields: [clientId], references: [id])
+  event  Event @relation(fields: [eventId], references: [id])
+  payments Payment[]
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  amount      Float
+  method      String   // CASH, CARD, BANK_TRANSFER
+  status      String   @default("PENDING")
+  paymentDate DateTime @default(now())
+  transactionId String?
+  notes       String?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
 model BookingEquipment {
   id          String   @id @default(cuid())
   bookingId   String
