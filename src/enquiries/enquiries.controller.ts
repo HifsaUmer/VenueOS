@@ -32,14 +32,15 @@ export class EnquiriesController {
   constructor(private readonly enquiriesService: EnquiriesService) {}
 
   @Post()
-  @Roles(UserRole.CLIENT)
+  @Roles(UserRole.CLIENT, UserRole.COORDINATOR)
   @ApiBearerAuth()
   @ApiCreatedResponse({ description: 'Enquiry created successfully' })
-  @ApiOperation({ summary: 'Create a new enquiry (Client only)' })
+  @ApiOperation({ summary: 'Create a new enquiry' })
   create(
     @Body() createEnquiryDto: CreateEnquiryDto,
     @CurrentUser() user: User,
   ) {
+    // Falls back seamlessly to user.id if logged in as a coordinator or a client
     return this.enquiriesService.create(createEnquiryDto, user.id);
   }
 
