@@ -1,22 +1,27 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ClientsService } from './clients.service';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-describe('ClientsService', () => {
-  let service: ClientsService;
+@Injectable()
+export class ClientsService {
+  constructor(private prisma: PrismaService) {}
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ClientsService,
-        { provide: PrismaService, useValue: { client: { findMany: jest.fn() } } },
-      ],
-    }).compile();
+  async findAll() {
+    return this.prisma.client.findMany();
+  }
 
-    service = module.get<ClientsService>(ClientsService);
-  });
+  async findOne(id: string) {
+    return this.prisma.client.findUnique({ where: { id } });
+  }
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-});
+  async create(data: any) {
+    return this.prisma.client.create({ data });
+  }
+
+  async update(id: string, data: any) {
+    return this.prisma.client.update({ where: { id }, data });
+  }
+
+  async remove(id: string) {
+    return this.prisma.client.delete({ where: { id } });
+  }
+}
