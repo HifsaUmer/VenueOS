@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import PageLayout from '../components/PageLayout';
-import { MessageSquare, Plus, Eye, Edit, X } from 'lucide-react';
+import { MessageSquare, Plus, Eye, Edit, X, Send, Check, Clock, AlertCircle, XCircle } from 'lucide-react';
 import api from '../services/api';
 
 interface EnquiryData {
@@ -10,7 +10,7 @@ interface EnquiryData {
   briefText?: string;
   status: string;
   client?: {
-    name?: string;
+    fullName?: string;
     email?: string;
   };
   createdAt?: string;
@@ -21,15 +21,14 @@ export default function CoordinatorEnquiries() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   
-  // Modal toggle states
+  // Modal states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   
-  // Active selected tracking records
   const [selectedEnquiry, setSelectedEnquiry] = useState<EnquiryData | null>(null);
   
-  // Form input field states
+  // Form states
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -41,6 +40,14 @@ export default function CoordinatorEnquiries() {
     description: '',
     briefText: '',
   });
+
+  // Status pipeline based on your schema
+  const statusPipeline = [
+    { value: 'RECEIVED', label: 'Received', icon: Clock, color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+    { value: 'PROPOSAL_SENT', label: 'Proposal Sent', icon: Send, color: 'bg-blue-50 text-blue-700 border-blue-200' },
+    { value: 'ACCEPTED', label: 'Accepted', icon: Check, color: 'bg-green-50 text-green-700 border-green-200' },
+    { value: 'REJECTED', label: 'Rejected', icon: XCircle, color: 'bg-red-50 text-red-700 border-red-200' },
+  ];
 
   const fetchEnquiries = async () => {
     try {
@@ -61,14 +68,11 @@ export default function CoordinatorEnquiries() {
   const handleCreateEnquiry = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = {
+      await api.post('/enquiries', {
         title: formData.title,
         description: formData.description || undefined,
         briefText: formData.briefText || undefined,
-      };
-
-      await api.post('/enquiries', payload);
-      
+      });
       setIsCreateOpen(false);
       setFormData({ title: '', description: '', briefText: '' });
       fetchEnquiries();
@@ -92,14 +96,11 @@ export default function CoordinatorEnquiries() {
     e.preventDefault();
     if (!selectedEnquiry) return;
     try {
-      const payload = {
+      await api.patch(`/enquiries/${selectedEnquiry.id}`, {
         title: editFormData.title,
         description: editFormData.description || undefined,
         briefText: editFormData.briefText || undefined,
-      };
-
-      await api.patch(`/enquiries/${selectedEnquiry.id}`, payload);
-      
+      });
       setIsEditOpen(false);
       setSelectedEnquiry(null);
       fetchEnquiries();
@@ -109,19 +110,53 @@ export default function CoordinatorEnquiries() {
     }
   };
 
+  const handleStatusUpdate = async (enquiryId: string, newStatus: string) => {
+    try {
+      console.log('Updating status to:', newStatus);
+      const response = await api.patch(`/enquiries/${enquiryId}`, { 
+        status: newStatus 
+      });
+      console.log('Update response:', response.data);
+      fetchEnquiries();
+    } catch (error: any) {
+      console.error('Failed to update status:', error);
+      alert(`Error updating status: ${error.response?.data?.message || 'Check connection details.'}`);
+    }
+  };
+
   const handleOpenView = (enquiry: EnquiryData) => {
     setSelectedEnquiry(enquiry);
     setIsViewOpen(true);
   };
 
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, string> = {
+      'RECEIVED': 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      'PROPOSAL_SENT': 'bg-blue-50 text-blue-700 border-blue-200',
+      'ACCEPTED': 'bg-green-50 text-green-700 border-green-200',
+      'REJECTED': 'bg-red-50 text-red-700 border-red-200',
+    };
+    return statusMap[status] || 'bg-slate-50 text-slate-700 border-slate-200';
+  };
+
+  const getNextStatuses = (currentStatus: string) => {
+    const statusOrder = ['RECEIVED', 'PROPOSAL_SENT', 'ACCEPTED'];
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    const next = statusOrder[currentIndex + 1] || null;
+    return { next, rejected: 'REJECTED' };
+  };
+
   const filteredEnquiries = filter === 'All' 
     ? enquiries 
-    : enquiries.filter(e => e.status === filter.toUpperCase());
+    : enquiries.filter(e => e.status === filter);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-slate-500 font-medium">Loading enquiries...</p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium">Loading enquiries...</p>
+        </div>
       </div>
     );
   }
@@ -132,16 +167,16 @@ export default function CoordinatorEnquiries() {
       subtitle="Review incoming customer event enquiries and coordinate proposals"
       icon={MessageSquare}
       actions={
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <select 
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="All">All Statuses</option>
-            <option value="Received">Received</option>
-            <option value="Proposal Sent">Proposal Sent</option>
-            <option value="Proposal Accepted">Proposal Accepted</option>
+            {statusPipeline.map(s => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
           </select>
           <button 
             onClick={() => setIsCreateOpen(true)}
@@ -172,42 +207,58 @@ export default function CoordinatorEnquiries() {
                   </td>
                 </tr>
               ) : (
-                filteredEnquiries.map((enquiry) => (
-                  <tr key={enquiry.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-semibold text-slate-900">{enquiry.title}</div>
-                      <div className="text-xs text-slate-500">
-                        {enquiry.client?.name || 'Assigned Client'} ({enquiry.client?.email || 'N/A'})
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">
-                      {enquiry.briefText || enquiry.description || 'No summary text listed.'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                        enquiry.status === 'RECEIVED' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' : 
-                        enquiry.status === 'PROPOSAL_SENT' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 
-                        'bg-green-50 text-green-700 border border-green-100'
-                      }`}>
-                        {enquiry.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm flex items-center gap-3">
-                      <button 
-                        onClick={() => handleOpenView(enquiry)}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                      >
-                        <Eye className="w-4 h-4" /> View
-                      </button>
-                      <button 
-                        onClick={() => handleOpenEdit(enquiry)}
-                        className="flex items-center gap-1 text-slate-600 hover:text-slate-800 font-medium transition-colors"
-                      >
-                        <Edit className="w-4 h-4" /> Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                filteredEnquiries.map((enquiry) => {
+                  const { next, rejected } = getNextStatuses(enquiry.status);
+                  return (
+                    <tr key={enquiry.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-semibold text-slate-900">{enquiry.title}</div>
+                        <div className="text-xs text-slate-500">
+                          {enquiry.client?.fullName || 'Assigned Client'} ({enquiry.client?.email || 'N/A'})
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700 max-w-xs truncate">
+                        {enquiry.briefText || enquiry.description || 'No summary text listed.'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(enquiry.status)}`}>
+                            {enquiry.status}
+                          </span>
+                          {enquiry.status !== 'ACCEPTED' && enquiry.status !== 'REJECTED' && (
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  handleStatusUpdate(enquiry.id, e.target.value);
+                                }
+                              }}
+                              value=""
+                              className="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                              <option value="">▶ Update</option>
+                              {next && <option value={next}>→ {next}</option>}
+                              <option value="REJECTED">✕ Reject</option>
+                            </select>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm flex items-center gap-3">
+                        <button 
+                          onClick={() => handleOpenView(enquiry)}
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                        >
+                          <Eye className="w-4 h-4" /> View
+                        </button>
+                        <button 
+                          onClick={() => handleOpenEdit(enquiry)}
+                          className="flex items-center gap-1 text-slate-600 hover:text-slate-800 font-medium transition-colors"
+                        >
+                          <Edit className="w-4 h-4" /> Edit
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -293,40 +344,56 @@ export default function CoordinatorEnquiries() {
                 <p className="text-sm font-semibold text-slate-800">{selectedEnquiry.title}</p>
               </div>
               <div>
-                <span className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Client Context</span>
+                <span className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Client</span>
                 <p className="text-sm font-medium text-slate-800">
-                  {selectedEnquiry.client?.name || 'Unknown'} ({selectedEnquiry.client?.email || 'N/A'})
+                  {selectedEnquiry.client?.fullName || 'Unknown'} ({selectedEnquiry.client?.email || 'N/A'})
                 </p>
               </div>
               <div>
-                <span className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Brief Context Summary</span>
+                <span className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Brief Summary</span>
                 <p className="text-sm text-slate-700">{selectedEnquiry.briefText || 'No summary text listed.'}</p>
               </div>
               <div>
-                <span className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Full Detailed Description</span>
+                <span className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Description</span>
                 <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100 max-h-32 overflow-y-auto whitespace-pre-wrap">
-                  {selectedEnquiry.description || 'No long description provided.'}
+                  {selectedEnquiry.description || 'No description provided.'}
                 </p>
               </div>
               <div>
-                <span className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Current Pipeline Status</span>
-                <span className={`inline-block mt-1 px-2.5 py-1 text-xs font-semibold rounded-full ${
-                  selectedEnquiry.status === 'RECEIVED' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' : 
-                  selectedEnquiry.status === 'PROPOSAL_SENT' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 
-                  'bg-green-50 text-green-700 border border-green-100'
-                }`}>
+                <span className="block text-xs font-medium text-slate-400 uppercase tracking-wider">Status</span>
+                <span className={`inline-block mt-1 px-2.5 py-1 text-xs font-semibold rounded-full border ${getStatusBadge(selectedEnquiry.status)}`}>
                   {selectedEnquiry.status}
                 </span>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-between items-center">
+              <div className="flex gap-2">
+                {selectedEnquiry.status !== 'ACCEPTED' && selectedEnquiry.status !== 'REJECTED' && (
+                  <button
+                    onClick={() => {
+                      const { next } = getNextStatuses(selectedEnquiry.status);
+                      if (next) handleStatusUpdate(selectedEnquiry.id, next);
+                    }}
+                    className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all"
+                  >
+                    Move to Next Stage
+                  </button>
+                )}
+                {selectedEnquiry.status !== 'REJECTED' && selectedEnquiry.status !== 'ACCEPTED' && (
+                  <button
+                    onClick={() => handleStatusUpdate(selectedEnquiry.id, 'REJECTED')}
+                    className="px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all"
+                  >
+                    Reject
+                  </button>
+                )}
+              </div>
               <button 
-                type="button" 
                 onClick={() => { setIsViewOpen(false); setSelectedEnquiry(null); }}
-                className="px-5 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+                className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
               >
-                Close View
+                Close
               </button>
             </div>
           </div>

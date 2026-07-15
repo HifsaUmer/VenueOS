@@ -64,6 +64,19 @@ export class EnquiriesService {
       include: { client: true, coordinator: true },
     });
   }
+  async updateStatus(id: string, status: string) {
+  const enquiry = await this.prisma.enquiry.findUnique({
+    where: { id },
+  });
+  if (!enquiry) {
+    throw new NotFoundException(`Enquiry with ID ${id} not found`);
+  }
+  return this.prisma.enquiry.update({
+    where: { id },
+    data: { status },
+    include: { client: true, coordinator: true },
+  });
+}
 
   async remove(id: string) {
     return this.prisma.enquiry.delete({

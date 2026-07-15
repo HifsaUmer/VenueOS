@@ -1,18 +1,21 @@
-import { IsString, IsOptional, IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional, IsNotEmpty, IsIn } from 'class-validator';
 
 export class CreateEnquiryDto {
-  @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
   @IsOptional()
+  @IsString()
   description?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
   @IsOptional()
+  @IsString()
   briefText?: string;
+
+  // ✅ Add status field (optional for creation)
+  @IsOptional()
+  @IsString()
+  @IsIn(['RECEIVED', 'PROPOSAL_SENT', 'ACCEPTED', 'REJECTED'])
+  status?: string;
 }

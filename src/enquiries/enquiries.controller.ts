@@ -18,6 +18,7 @@ import {
 import { EnquiriesService } from './enquiries.service';
 import { CreateEnquiryDto } from './dto/create-enquiry.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
+import { UpdateStatusDto } from './dto/update-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorator/roles.decorator';
@@ -40,7 +41,6 @@ export class EnquiriesController {
     @Body() createEnquiryDto: CreateEnquiryDto,
     @CurrentUser() user: User,
   ) {
-    // Falls back seamlessly to user.id if logged in as a coordinator or a client
     return this.enquiriesService.create(createEnquiryDto, user.id);
   }
 
@@ -70,6 +70,19 @@ export class EnquiriesController {
     @Body() updateEnquiryDto: UpdateEnquiryDto,
   ) {
     return this.enquiriesService.update(id, updateEnquiryDto);
+  }
+
+  // ✅ NEW: Dedicated status update endpoint
+  @Patch(':id/status')
+  @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'Update enquiry status' })
+  @ApiOperation({ summary: 'Update enquiry status' })
+  updateStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateStatusDto,
+  ) {
+    return this.enquiriesService.updateStatus(id, updateStatusDto.status);
   }
 
   @Patch(':id/assign-coordinator/:coordinatorId')

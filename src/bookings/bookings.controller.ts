@@ -32,6 +32,7 @@ export class BookingsController {  // ✅ 'export' is here
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.COORDINATOR)
+  
   @ApiOperation({ summary: 'Create a new booking' })
   @ApiResponse({ status: 201, description: 'Booking created successfully' })
   @ApiResponse({ status: 409, description: 'Conflict detected' })
@@ -40,6 +41,7 @@ export class BookingsController {  // ✅ 'export' is here
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.OPERATIONS)
   @Roles(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.CLIENT)
   @ApiOperation({ summary: 'Get all bookings' })
   findAll() {

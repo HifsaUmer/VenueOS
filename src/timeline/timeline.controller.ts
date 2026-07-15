@@ -41,6 +41,7 @@ export class TimelineController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN, UserRole.COORDINATOR, UserRole.OPERATIONS) 
   @ApiBearerAuth()
   @ApiOkResponse({ description: 'Get all timeline items' })
   @ApiOperation({ summary: 'Get all timeline items' })

@@ -21,6 +21,7 @@ import AdminUsers from './pages/AdminUsers'
 import AdminSettings from './pages/AdminSettings'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuthStore } from './store/authStore'
+import OperationsDashboard from './pages/OperationsDashboard'; 
 
 
 function App() {
@@ -69,6 +70,8 @@ function App() {
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
+
+           <Route path="/operations" element={<OperationsDashboard />} /> 
         </Route>
       </Routes>
     </Router>

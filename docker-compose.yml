@@ -36,7 +36,12 @@ services:
     volumes:
       - ./src:/app/src
       - ./prisma:/app/prisma
-    command: npm run start:dev
+    command: >
+      sh -c "npx prisma migrate deploy &&
+             npx prisma generate &&
+             npx prisma db seed &&
+             npm run start:dev"
+
   frontend:
     build:
       context: ./frontend

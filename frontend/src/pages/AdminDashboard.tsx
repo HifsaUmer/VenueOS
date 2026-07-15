@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. Imported the navigation hook
+import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import PageLayout from '../components/PageLayout';
 import StatsCard from '../components/StatsCard';
 import {
@@ -10,7 +12,7 @@ import {
 import api from '../services/api';
 
 export default function AdminDashboard() {
-  const navigate = useNavigate(); // 2. Initialized the navigator
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalEvents: 0,
@@ -20,6 +22,7 @@ export default function AdminDashboard() {
     occupancyRate: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -35,7 +38,7 @@ export default function AdminDashboard() {
         const bookings = bookingsRes.data || [];
 
         setStats({
-          totalUsers: 0, // TODO: Add proper /users/me or count endpoint later
+          totalUsers: 0,
           totalEvents: events.length,
           totalSpaces: spaces.length,
           totalBookings: bookings.length,
@@ -53,6 +56,117 @@ export default function AdminDashboard() {
 
     fetchStats();
   }, []);
+
+  const generatePDFReport = async () => {
+    setGeneratingReport(true);
+    try {
+      // Fetch fresh data
+      const [bookingsRes, eventsRes, spacesRes] = await Promise.all([
+        api.get('/bookings'),
+        api.get('/events'),
+        api.get('/spaces'),
+      ]);
+
+      const bookings = bookingsRes.data || [];
+      const events = eventsRes.data || [];
+      const spaces = spacesRes.data || [];
+
+      // Create PDF
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Header
+      doc.setFillColor(59, 130, 246);
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.text('VenueOS Report', pageWidth / 2, 25, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 35, { align: 'center' });
+
+      let y = 55;
+
+      // Summary Section
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(16);
+      doc.text('Summary', 14, y);
+      y += 10;
+
+      const summaryData = [
+        ['Total Events', events.length],
+        ['Total Spaces', spaces.length],
+        ['Total Bookings', bookings.length],
+        ['Total Revenue', `$${stats.revenue.toLocaleString()}`],
+        ['Occupancy Rate', `${stats.occupancyRate}%`],
+      ];
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Metric', 'Value']],
+        body: summaryData,
+        theme: 'striped',
+        headStyles: { fillColor: [59, 130, 246] },
+        styles: { fontSize: 10 },
+        margin: { left: 14, right: 14 },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 15;
+
+      // Bookings Table
+      doc.setFontSize(16);
+      doc.text('Recent Bookings', 14, y);
+      y += 10;
+
+      if (bookings.length > 0) {
+        const bookingRows = bookings.slice(0, 10).map((b: any) => [
+          b.id.slice(0, 8),
+          b.event?.title || 'N/A',
+          b.date || 'N/A',
+          `$${b.total || 0}`,
+          b.status || 'PENDING',
+        ]);
+
+        autoTable(doc, {
+          startY: y,
+          head: [['ID', 'Event', 'Date', 'Amount', 'Status']],
+          body: bookingRows,
+          theme: 'striped',
+          headStyles: { fillColor: [59, 130, 246] },
+          styles: { fontSize: 8 },
+          margin: { left: 14, right: 14 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 15;
+      } else {
+        doc.setFontSize(12);
+        doc.text('No bookings found.', 14, y);
+        y += 10;
+      }
+
+      // Footer
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(
+          `Page ${i} of ${totalPages} | VenueOS - ${new Date().getFullYear()}`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: 'center' }
+        );
+      }
+
+      // Download PDF
+      doc.save(`venueos-report-${new Date().toISOString().split('T')[0]}.pdf`);
+
+    } catch (error) {
+      console.error('Error generating report:', error);
+      alert('Failed to generate report. Please try again.');
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -72,7 +186,6 @@ export default function AdminDashboard() {
     { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'blue' as const, delay: 0 },
   ];
 
-  // 3. Defined the target routes mapping to match App.tsx definitions
   const quickActions = [
     { title: 'Manage Users', icon: Users, color: 'blue', count: stats.totalUsers, path: '/admin/users' },
     { title: 'View Analytics', icon: TrendingUp, color: 'purple', count: '📊', path: '/admin/analytics' },
@@ -85,10 +198,14 @@ export default function AdminDashboard() {
       subtitle="Welcome back! Here's your venue performance overview"
       icon={Sparkles}
       actions={
-        <button className="group relative px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 hover:-translate-y-0.5">
+        <button
+          onClick={generatePDFReport}
+          disabled={generatingReport}
+          className="group relative px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <span className="relative z-10 flex items-center gap-2">
             <Zap className="w-4 h-4" />
-            Generate Report
+            {generatingReport ? 'Generating...' : 'Generate Report'}
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </span>
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
@@ -167,7 +284,7 @@ export default function AdminDashboard() {
         {quickActions.map((item, index) => (
           <div
             key={item.title}
-            onClick={() => navigate(item.path)} // 4. Added the click handler to trigger actual routing transition
+            onClick={() => navigate(item.path)}
             className="group bg-white/60 backdrop-blur-sm border border-white/40 rounded-2xl p-6 hover:shadow-xl transition-all duration-500 hover:-translate-y-1 cursor-pointer animate-fade-in-up"
             style={{ animationDelay: `${400 + index * 100}ms` }}
           >
