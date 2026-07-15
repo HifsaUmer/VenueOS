@@ -30,19 +30,19 @@ model User {
   bookings Booking[] @relation("UserBookings")
   invoices Invoice[]
 }
-
 model Event {
   id          String   @id @default(cuid())
   title       String
   description String?
-  type        String   // Wedding, Corporate, Birthday, Conference, etc.
-  status      String   @default("DRAFT") // DRAFT, PROPOSAL, CONFIRMED, COMPLETED, CANCELLED
+  type        String
+  status      String   @default("DRAFT")
   clientId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   client   User     @relation("UserEvents", fields: [clientId], references: [id])
   bookings Booking[]
+  invoices Invoice[]   // ✅ ADD THIS LINE
 }
 
 model Space {
