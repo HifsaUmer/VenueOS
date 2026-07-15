@@ -17,6 +17,7 @@ interface EventData {
 export default function CoordinatorEvents() {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // States for Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -47,7 +48,6 @@ export default function CoordinatorEvents() {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Sent exactly what CreateEventDto expects in the body payload without clientId
       const payload = {
         title: formData.title,
         description: formData.description || '',
@@ -64,6 +64,16 @@ export default function CoordinatorEvents() {
       alert(`Error creating event: ${error.response?.data?.message || 'Check network panel.'}`);
     }
   };
+
+  // Dynamic filter application logic
+  const filteredEvents = events.filter(event => {
+    const query = searchQuery.toLowerCase();
+    return (
+      event.title.toLowerCase().includes(query) ||
+      (event.type && event.type.toLowerCase().includes(query)) ||
+      (event.location && event.location.toLowerCase().includes(query))
+    );
+  });
 
   if (loading) {
     return (
@@ -99,7 +109,9 @@ export default function CoordinatorEvents() {
           <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search events by name, type, or date..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search events by name, type, or location..."
             className="w-full pl-10 pr-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
           />
         </div>
@@ -110,14 +122,14 @@ export default function CoordinatorEvents() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {events.length === 0 ? (
+        {filteredEvents.length === 0 ? (
           <div className="col-span-full bg-white/80 backdrop-blur-sm border border-white/40 rounded-2xl p-12 text-center">
             <Calendar className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900">No Events Found</h3>
-            <p className="text-slate-500 text-sm mt-1 font-normal">Active client bookings will show up here</p>
+            <p className="text-slate-500 text-sm mt-1 font-normal">No active entries match your criteria</p>
           </div>
         ) : (
-          events.map((event, index) => (
+          filteredEvents.map((event, index) => (
             <div 
               key={event.id}
               className="group bg-white/80 backdrop-blur-sm border border-white/40 rounded-2xl p-6 hover:shadow-xl transition-all duration-500 hover:-translate-y-1 animate-fade-in-up"
