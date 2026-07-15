@@ -40,8 +40,8 @@ export class EventsController {
     @Body() createEventDto: CreateEventDto,
     @CurrentUser() user: User,
   ) {
-    const clientId = user.role === UserRole.CLIENT ? user.id : createEventDto.contractId ? undefined : createEventDto.contractId;
-    return this.eventsService.create(createEventDto, user.role === UserRole.CLIENT ? user.id : undefined as any);
+    // Passes the extracted request user ID directly into the database mapping pipeline context
+    return this.eventsService.create(createEventDto, user.id);
   }
 
   @Get()

@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import Navbar from '../components/Navbar'
+import { useState } from 'react';
+import PageLayout from '../components/PageLayout';
+import { Sparkles, MessageSquare, Plus, Eye, Edit } from 'lucide-react';
 
-// Mock data for enquiries
 const mockEnquiries = [
   {
     id: 1,
@@ -33,82 +33,86 @@ const mockEnquiries = [
     status: 'Proposal Accepted',
     createdAt: '2025-09-15'
   }
-]
+];
 
 export default function CoordinatorEnquiries() {
-  const [enquiries] = useState(mockEnquiries)
-  const [filter, setFilter] = useState('All')
+  const [enquiries] = useState(mockEnquiries);
+  const [filter, setFilter] = useState('All');
 
   const filteredEnquiries = filter === 'All' 
     ? enquiries 
-    : enquiries.filter(e => e.status === filter)
+    : enquiries.filter(e => e.status === filter);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar activePage="enquiries" />
-      
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold">Enquiries</h2>
-          <div className="flex items-center gap-3">
-            <select 
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-2 border rounded-lg"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Received">Received</option>
-              <option value="Proposal Sent">Proposal Sent</option>
-              <option value="Proposal Accepted">Proposal Accepted</option>
-            </select>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-              + New Enquiry
-            </button>
-          </div>
+    <PageLayout
+      title="Enquiries"
+      subtitle="Review incoming customer event enquiries and coordinate proposals"
+      icon={MessageSquare}
+      actions={
+        <div className="flex items-center gap-3">
+          <select 
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Received">Received</option>
+            <option value="Proposal Sent">Proposal Sent</option>
+            <option value="Proposal Accepted">Proposal Accepted</option>
+          </select>
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl transition-all duration-300">
+            <Plus className="w-4 h-4" />
+            New Enquiry
+          </button>
         </div>
-
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      }
+    >
+      <div className="bg-white/80 backdrop-blur-sm border border-white/40 rounded-2xl overflow-hidden shadow-xl">
+        <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guests</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Client</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Event Type</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Guests</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-100 bg-transparent">
               {filteredEnquiries.map((enquiry) => (
-                <tr key={enquiry.id} className="hover:bg-gray-50">
+                <tr key={enquiry.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{enquiry.clientName}</div>
-                    <div className="text-sm text-gray-500">{enquiry.email}</div>
+                    <div className="font-semibold text-slate-900">{enquiry.clientName}</div>
+                    <div className="text-xs text-slate-500">{enquiry.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">{enquiry.eventType}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">{enquiry.date}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">{enquiry.guests}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{enquiry.eventType}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{enquiry.date}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{enquiry.guests}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${enquiry.status === 'Received' ? 'bg-yellow-100 text-yellow-800' : 
-                        enquiry.status === 'Proposal Sent' ? 'bg-blue-100 text-blue-800' : 
-                        'bg-green-100 text-green-800'
-                      }`}
-                    >
+                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+                      enquiry.status === 'Received' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' : 
+                      enquiry.status === 'Proposal Sent' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 
+                      'bg-green-50 text-green-700 border border-green-100'
+                    }`}>
                       {enquiry.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">View</button>
-                    <button className="text-gray-600 hover:text-gray-900">Edit</button>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm flex items-center gap-3">
+                    <button className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                      <Eye className="w-4 h-4" /> View
+                    </button>
+                    <button className="flex items-center gap-1 text-slate-600 hover:text-slate-800 font-medium transition-colors">
+                      <Edit className="w-4 h-4" /> Edit
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </main>
-    </div>
-  )
+      </div>
+    </PageLayout>
+  );
 }

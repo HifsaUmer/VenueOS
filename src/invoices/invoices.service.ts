@@ -3,21 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { User, UserRole, InvoiceStatus } from '@prisma/client';
-// import * as pdfmake from 'pdfmake';
-// import * as path from 'path';
 
-// const fonts = {
-//   Roboto: {
-//     normal: path.join(__dirname, '../../../node_modules/roboto-font/fonts/Roboto/Roboto-Regular.ttf'),
-//     bold: path.join(__dirname, '../../../node_modules/roboto-font/fonts/Roboto/Roboto-Bold.ttf'),
-//     italics: path.join(__dirname, '../../../node_modules/roboto-font/fonts/Roboto/Roboto-Italic.ttf'),
-//     bolditalics: path.join(__dirname, '../../../node_modules/roboto-font/fonts/Roboto/Roboto-BoldItalic.ttf')
-//   }
-// };
-
-
-// const PdfPrinter = pdfmake.default ? pdfmake.default : pdfmake;
-// const printer = new PdfPrinter(fonts);
+// Zero configuration, highly compatible PDF generator
+const PDFDocument = require('pdfkit');
 
 @Injectable()
 export class InvoicesService {
@@ -78,55 +66,63 @@ export class InvoicesService {
   }
 
   async generatePdf(id: string): Promise<Buffer> {
-    throw new Error('PDF generation is temporarily disabled for debugging');
-    // const invoice = await this.findOne(id);
-    // const docDefinition = {
-    //   content: [
-    //     { text: 'INVOICE', style: 'header' },
-    //     { text: `Invoice Number: ${invoice.number}`, style: 'subheader' },
-    //     { text: `Date: ${new Date(invoice.createdAt).toLocaleDateString()}`, style: 'subheader' },
-    //     { text: `Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`, style: 'subheader' },
-    //     '\n',
-    //     {
-    //       columns: [
-    //         {
-    //           width: '*',
-    //           text: `Client: ${invoice.client.fullName}\nEmail: ${invoice.client.email}`
-    //         }
-    //       ]
-    //     },
-    //     '\n',
-    //     {
-    //       table: {
-    //         headerRows: 1,
-    //         widths: ['*', 'auto'],
-    //         body: [
-    //           ['Description', 'Amount'],
-    //           [`Event: ${invoice.event.title}`, `$${invoice.amount.toFixed(2)}`],
-    //         ]
-    //       }
-    //     },
-    //     '\n',
-    //     { text: `Total Amount: $${invoice.amount.toFixed(2)}`, style: 'total' },
-    //     '\n',
-    //     { text: `Status: ${invoice.status}`, style: 'status' }
-    //   ],
-    //   styles: {
-    //     header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
-    //     subheader: { fontSize: 14, bold: true, margin: [0, 5, 0, 5] },
-    //     total: { fontSize: 16, bold: true, margin: [0, 10, 0, 10] },
-    //     status: { fontSize: 14, margin: [0, 5, 0, 5] }
-    //   }
-    // };
+    const invoice = await this.findOne(id);
 
-    // return new Promise((resolve, reject) => {
-    //   const chunks: any[] = [];
-    //   const pdfDoc = printer.createPdfKitDocument(docDefinition);
-    //   pdfDoc.on('data', chunk => chunks.push(chunk));
-    //   pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
-    //   pdfDoc.on('error', reject);
-    //   pdfDoc.end();
-    // });
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 });
+      const chunks: Buffer[] = [];
+
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // --- PDF Header ---
+      doc.fillColor('#1e293b').fontSize(24).text('INVOICE', { align: 'right' });
+      doc.moveDown(1);
+
+      // --- Metadata Table/Rows ---
+      doc.fontSize(10).fillColor('#64748b');
+      doc.text(`Invoice Number: `, { continued: true }).fillColor('#0f172a').text(invoice.number || id);
+      doc.fillColor('#64748b').text(`Issue Date: `, { continued: true }).fillColor('#0f172a').text(new Date(invoice.createdAt).toLocaleDateString());
+      doc.fillColor('#64748b').text(`Due Date: `, { continued: true }).fillColor('#0f172a').text(new Date(invoice.dueDate).toLocaleDateString());
+      doc.moveDown(1.5);
+
+      // Divider Line
+      doc.strokeColor('#cbd5e1').lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+      doc.moveDown(1.5);
+
+      // --- Client Info ---
+      doc.fontSize(12).fillColor('#0f172a').text('BILLED TO:', { underline: true });
+      doc.fontSize(10).fillColor('#334155').text(`Name: ${invoice.client.fullName}`);
+      doc.text(`Email: ${invoice.client.email}`);
+      doc.moveDown(2);
+
+      // --- Invoice Items Header ---
+      const tableTop = doc.y;
+      doc.fillColor('#0f172a').fontSize(10);
+      doc.text('Description', 50, tableTop);
+      doc.text('Amount', 450, tableTop, { align: 'right' });
+      
+      // Divider Line
+      doc.strokeColor('#e2e8f0').lineWidth(1).moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+      doc.moveDown(1);
+
+      // --- Item ---
+      const itemY = doc.y + 5;
+      doc.fillColor('#475569').text(`Event Concept Blueprint Setup: ${invoice.event.title}`, 50, itemY);
+      doc.text(`$${invoice.amount.toFixed(2)}`, 450, itemY, { align: 'right' });
+      doc.moveDown(2);
+
+      // Footer space boundary
+      const summaryY = doc.y + 15;
+      doc.strokeColor('#cbd5e1').lineWidth(1).moveTo(50, summaryY).lineTo(550, summaryY).stroke();
+
+      // --- Total & Status ---
+      doc.fillColor('#0f172a').fontSize(12).text(`Total Amount Due: $${invoice.amount.toFixed(2)}`, 50, summaryY + 15, { align: 'right' });
+      doc.fontSize(10).fillColor('#475569').text(`Payment Status: ${invoice.status}`, 50, summaryY + 35, { align: 'right' });
+
+      doc.end();
+    });
   }
 
   async updateStatus(id: string, status: InvoiceStatus) {

@@ -35,10 +35,10 @@ export default function CoordinatorVendors() {
   return (
     <PageLayout
       title="Vendors"
-      subtitle="Manage preferred vendors and partnerships"
+      subtitle="Manage preferred vendors and partnership directories"
       icon={Sparkles}
       actions={
-        <button className="group relative px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300 hover:-translate-y-0.5">
+        <button className="group relative px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
           <span className="relative z-10 flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Add Vendor
@@ -63,7 +63,7 @@ export default function CoordinatorVendors() {
           <div className="col-span-full bg-white/80 backdrop-blur-sm border border-white/40 rounded-2xl p-12 text-center">
             <Star className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-900">No Vendors Found</h3>
-            <p className="text-slate-500 text-sm mt-1">Start adding your preferred vendors</p>
+            <p className="text-slate-500 text-sm mt-1 font-normal">Start configuring preferred vendors to display them here</p>
           </div>
         ) : (
           vendors.map((vendor, index) => (

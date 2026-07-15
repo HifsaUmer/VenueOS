@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageLayout from '../components/PageLayout';
 import StatsCard from '../components/StatsCard';
-import { Calendar, MapPin, Users, Clock, Sparkles, CheckCircle, AlertCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Sparkles, CheckCircle, ChevronRight, Activity } from 'lucide-react';
 import api from '../services/api';
 
 export default function CoordinatorDashboard() {
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [spaces, setSpaces] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,12 @@ export default function CoordinatorDashboard() {
 
   const pendingBookings = bookings.filter(b => b.status === 'PENDING').length;
   const confirmedBookings = bookings.filter(b => b.status === 'CONFIRMED').length;
+
+  const quickActions = [
+    { title: 'View Calendar', icon: Calendar, color: 'blue', path: '/coordinator/calendar' },
+    { title: 'Manage Vendors', icon: Users, color: 'purple', path: '/coordinator/vendors' },
+    { title: 'Track Timeline Tasks', icon: Activity, color: 'green', path: '/coordinator/timeline' },
+  ];
 
   return (
     <PageLayout 
@@ -103,15 +111,11 @@ export default function CoordinatorDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
-        {[
-          { title: 'Create Booking', icon: Calendar, color: 'blue' },
-          { title: 'Manage Vendors', icon: Users, color: 'purple' },
-          { title: 'View Calendar', icon: MapPin, color: 'green' },
-        ].map((item, index) => (
+        {quickActions.map((item, index) => (
           <div 
             key={item.title}
+            onClick={() => navigate(item.path)}
             className="group bg-white/60 backdrop-blur-sm border border-white/40 rounded-2xl p-6 hover:shadow-xl transition-all duration-500 hover:-translate-y-1 cursor-pointer animate-fade-in-up"
             style={{ animationDelay: `${400 + index * 100}ms` }}
           >

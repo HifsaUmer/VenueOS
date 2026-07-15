@@ -1,17 +1,53 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import PageLayout from '../components/PageLayout';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sparkles, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import api from '../services/api';
 
+interface Booking {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  space: string;
+  status: string;
+}
+
 export default function CoordinatorCalendar() {
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
 
+  // Safely format Date object to YYYY-MM-DD locally without UTC shift
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Get active month range to fetch data from API dynamically
+  const dateRange = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 0);
+    return {
+      startDate: formatLocalDate(start),
+      endDate: formatLocalDate(end),
+    };
+  }, [currentDate]);
+
   useEffect(() => {
     const fetchBookings = async () => {
+      setLoading(true);
       try {
-        const response = await api.get('/bookings');
+        // Querying /calendar/events matching backend route and params
+        const response = await api.get('/calendar/events', {
+          params: {
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+          },
+        });
         setBookings(response.data || []);
       } catch (error) {
         console.error('Error fetching bookings:', error);
@@ -20,7 +56,7 @@ export default function CoordinatorCalendar() {
       }
     };
     fetchBookings();
-  }, []);
+  }, [dateRange]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -31,7 +67,6 @@ export default function CoordinatorCalendar() {
     const startOffset = firstDay.getDay();
     const totalDays = lastDay.getDate();
     
-    // Add empty cells for days before month starts
     for (let i = 0; i < startOffset; i++) {
       days.push(null);
     }
@@ -100,8 +135,9 @@ export default function CoordinatorCalendar() {
               return <div key={`empty-${index}`} className="min-h-[100px] p-2 border-b border-r border-slate-100 bg-slate-50/30"></div>;
             }
             
-            const dateStr = day.toISOString().split('T')[0];
-            const dayBookings = bookings.filter(b => b.date === dateStr);
+            const dateStr = formatLocalDate(day);
+            // Matches formatted start string returned from calendar service map logic
+            const dayBookings = bookings.filter(b => b.start.startsWith(dateStr));
             const hasBooking = dayBookings.length > 0;
             const isToday = day.toDateString() === new Date().toDateString();
             
@@ -126,7 +162,7 @@ export default function CoordinatorCalendar() {
                   <div className="mt-1 space-y-1">
                     {dayBookings.slice(0, 2).map((booking) => (
                       <div key={booking.id} className="text-[10px] bg-blue-100/80 text-blue-700 px-1.5 py-0.5 rounded truncate">
-                        {booking.event?.title || 'Event'}
+                        {booking.title}
                       </div>
                     ))}
                     {dayBookings.length > 2 && (
